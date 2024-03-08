@@ -164,7 +164,6 @@ if __name__ == '__main__':
         opt.driving_audio_path,
         video_add_audio_path)
     subprocess.call(cmd, shell=True)
-print(__name__)
 
 
 

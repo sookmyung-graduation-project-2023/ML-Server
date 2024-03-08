@@ -19,43 +19,50 @@ app = FastAPI()
 
 class Data_request(BaseModel):
 	chat: dict
-	roleplayID: str
 
 
 @app.post("/video")
 def makeVideo(data_requst: Data_request):
-	#음성 생성
-	voice_dic = {'woman': 'nova', 'man': 'echo', 'oldWoman': 'alloy', 'oldMan': 'onyx'}
-	client = OpenAI(api_key=AWS_API_KEY)
-	speech_file_path = Path(__file__).parent / "speech.mp3"
-	response = client.audio.speech.create(
-  		model="tts-1-hd",
-  		voice=voice_dic[data_requst.chat['roleType']],
-  		input=data_requst.chat['text']
-	)
-	response.stream_to_file(speech_file_path)
-	#음성 변환(mp3 -> wav)
-	AudioSegment.from_mp3("speech.mp3").export("speech.wav", format="wav")
+	try:
+		#음성 생성
+		voice_dic = {'woman': 'nova', 'man': 'echo', 'oldWoman': 'alloy', 'oldMan': 'onyx'}
+		client = OpenAI(api_key=AWS_API_KEY)
+		speech_file_path = Path(__file__).parent / "speech.mp3"
+		response = client.audio.speech.create(
+  			model="tts-1-hd",
+  			voice=voice_dic[data_requst.chat['roleType']],
+  			input=data_requst.chat['text']
+		)
+		response.stream_to_file(speech_file_path)
+		#음성 변환(mp3 -> wav)
+		AudioSegment.from_mp3("speech.mp3").export("speech.wav", format="wav")
 
-	#영상 생성
-	source_video_path = "./woman.mp4"
-	openface_landmark_path = "./woman.csv"
-	driving_audio_path = "./speech.wav"
-	command = "python inference.py --mouth_region_size=256 --source_video_path="+ source_video_path +" --source_openface_landmark_path="+ openface_landmark_path +" --driving_audio_path="+ driving_audio_path +" --pretrained_clip_DINet_path=./asserts/clip_training_DINet_256mouth.pth"
-	os.system(command)
+		#영상 생성
+		source_video_path = "./"+data_requst.chat['roleType']+".mp4"
+		openface_landmark_path = "./"+data_requst.chat['roleType']+".csv"
+		driving_audio_path = "./speech.wav"
+		command = "python inference.py --mouth_region_size=256 --source_video_path="+ source_video_path +" --source_openface_landmark_path="+ openface_landmark_path +" --driving_audio_path="+ driving_audio_path +" --pretrained_clip_DINet_path=./asserts/clip_training_DINet_256mouth.pth"
+		os.system(command)
 
-	#영상 업로드
-	client = boto3.client('s3',
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-            region_name=AWS_DEFAULT_REGION
-    )
+		#영상 업로드
+		client = boto3.client('s3',
+        	    aws_access_key_id=AWS_ACCESS_KEY_ID,
+            	aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            	region_name=AWS_DEFAULT_REGION
+    	)
 
-	file_name = './asserts/inference_result/woman_facial_dubbing_add_audio.mp4'     # 업로드할 파일 이름 
-	bucket = 'lip-reading-project-bucket'           	# 버켓 주소
-	key = data_requst.roleplayID + '_' + str(data_requst.chat['idx']) + '.mp4'	# s3 파일 이미지 -> roleplayID+순서
-	client.upload_file(file_name, bucket, key) #파일 저장
+		file_name = './asserts/inference_result/woman_facial_dubbing_add_audio.mp4'     # 업로드할 파일 이름 
+		bucket = 'lip-reading-project-bucket'           	# 버켓 주소
+		key = data_requst.chat['videoUrl'][37:]	# s3 파일 이미지 -> roleplayID+순서
+		client.upload_file(file_name, bucket, key) #파일 저장
 	
-	return {
-		"video": key
-	}
+		return {
+			"videoName": key,
+			"success": True,
+		}
+	
+	except Exception as e:
+		return {
+			"success": False,
+			"message": e
+		}
