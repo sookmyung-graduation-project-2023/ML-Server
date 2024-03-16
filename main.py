@@ -77,7 +77,7 @@ def makeVideo(data_requst: Data_request):
     	    			':percentage': 100,
 						':status': "done"
     				},
-					ExpressionAttributeName={
+					ExpressionAttributeNames={
 						'#s':"status"
 					}
 				)
