@@ -85,10 +85,14 @@ def makeVideo(data_requst: Data_request):
         			'PK': data_requst.userID,
         			'SK': data_requst.roleplayID,
     			},
-    			UpdateExpression='SET percentage = :percentage',
+    			UpdateExpression='SET percentage = :percentage, #s = :status',
 	    		ExpressionAttributeValues={
-    	    		':percentage': 100
-    			}
+    	    		':percentage': 100,
+					':status': "done"
+    			},
+				ExpressionAttributeName={
+					'#s':"status"
+				}
 			)
 
 		return {
