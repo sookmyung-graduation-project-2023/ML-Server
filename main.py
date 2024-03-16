@@ -66,34 +66,32 @@ def makeVideo(data_requst: Data_request):
 			s3client.upload_file(file_name, bucket, key) #파일 저장
 
 			#데이터베이스 percentage 업데이트
-			table.update_item(
-    			Key={
-        			'PK': data_requst.userID,
-        			'SK': data_requst.roleplayID,
-    			},
-    			UpdateExpression='SET percentage = :percentage',
-	    		ExpressionAttributeValues={
-    	    		':percentage': percentageAmount*(idx+1) + 10
-    			}
-			)
-
-		#데이터베이스 percentage 업데이트
-		final_percentage = percentageAmount*len(data_requst.chatList) + 10
-		if final_percentage != 100:
-			table.update_item(
-    			Key={
-        			'PK': data_requst.userID,
-        			'SK': data_requst.roleplayID,
-    			},
-    			UpdateExpression='SET percentage = :percentage, #s = :status',
-	    		ExpressionAttributeValues={
-    	    		':percentage': 100,
-					':status': "done"
-    			},
-				ExpressionAttributeName={
-					'#s':"status"
-				}
-			)
+			if idx+1 == len(data_requst.chatList):
+				table.update_item(
+    				Key={
+        				'PK': data_requst.userID,
+        				'SK': data_requst.roleplayID,
+    				},
+    				UpdateExpression='SET percentage = :percentage, #s = :status',
+	    			ExpressionAttributeValues={
+    	    			':percentage': 100,
+						':status': "done"
+    				},
+					ExpressionAttributeName={
+						'#s':"status"
+					}
+				)
+			else:
+				table.update_item(
+    				Key={
+        				'PK': data_requst.userID,
+        				'SK': data_requst.roleplayID,
+	    			},
+    				UpdateExpression='SET percentage = :percentage',
+	    			ExpressionAttributeValues={
+    	    			':percentage': percentageAmount*(idx+1) + 10
+    				}
+				)	
 
 		return {
 			"message": "영상 생성 성공",
