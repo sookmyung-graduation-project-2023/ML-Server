@@ -18,51 +18,86 @@ AWS_DEFAULT_REGION = os.environ["AWS_DEFAULT_REGION"]
 app = FastAPI()
 
 class Data_request(BaseModel):
-	chat: dict
-
+	chatList: list
+	userID: str
+	roleplayID: str
 
 @app.post("/video")
 def makeVideo(data_requst: Data_request):
 	try:
-		#음성 생성
 		voice_dic = {'woman': 'nova', 'man': 'echo', 'oldWoman': 'alloy', 'oldMan': 'onyx'}
-		client = OpenAI(api_key=AWS_API_KEY)
-		speech_file_path = Path(__file__).parent / "speech.mp3"
-		response = client.audio.speech.create(
-  			model="tts-1-hd",
-  			voice=voice_dic[data_requst.chat['roleType']],
-  			input=data_requst.chat['text']
+		openAIclient = OpenAI(api_key=AWS_API_KEY)
+		dynamodb = boto3.resource('dynamodb', 
+					region_name=AWS_DEFAULT_REGION,
+					aws_access_key_id=AWS_ACCESS_KEY_ID,
+					aws_secret_access_key=AWS_SECRET_ACCESS_KEY
 		)
-		response.stream_to_file(speech_file_path)
-		#음성 변환(mp3 -> wav)
-		AudioSegment.from_mp3("speech.mp3").export("speech.wav", format="wav")
-
-		#영상 생성
-		source_video_path = "./"+data_requst.chat['roleType']+".mp4"
-		openface_landmark_path = "./"+data_requst.chat['roleType']+".csv"
-		driving_audio_path = "./speech.wav"
-		command = "python inference.py --mouth_region_size=256 --source_video_path="+ source_video_path +" --source_openface_landmark_path="+ openface_landmark_path +" --driving_audio_path="+ driving_audio_path +" --pretrained_clip_DINet_path=./asserts/clip_training_DINet_256mouth.pth"
-		os.system(command)
-
-		#영상 업로드
-		client = boto3.client('s3',
-        	    aws_access_key_id=AWS_ACCESS_KEY_ID,
-            	aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-            	region_name=AWS_DEFAULT_REGION
+		table = dynamodb.Table('LipRead')
+		s3client = boto3.client('s3',
+        		    aws_access_key_id=AWS_ACCESS_KEY_ID,
+            		aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            		region_name=AWS_DEFAULT_REGION
     	)
+		percentageAmount = 90 // len(data_requst.chatList)
 
-		file_name = './asserts/inference_result/woman_facial_dubbing_add_audio.mp4'     # 업로드할 파일 이름 
-		bucket = 'lip-reading-project-bucket'           	# 버켓 주소
-		key = data_requst.chat['videoUrl'][37:]	# s3 파일 이미지 -> roleplayID+순서
-		client.upload_file(file_name, bucket, key) #파일 저장
-	
+		for idx, chat in enumerate(data_requst.chatList):
+			#음성 생성
+			speech_file_path = Path(__file__).parent / "speech.mp3"
+			response = openAIclient.audio.speech.create(
+  				model="tts-1-hd",
+  				voice=voice_dic[chat['roleType']],
+  				input=chat['text']
+			)
+			response.stream_to_file(speech_file_path)
+			#음성 변환(mp3 -> wav)
+			AudioSegment.from_mp3("speech.mp3").export("speech.wav", format="wav")
+
+			#영상 생성
+			source_video_path = "./"+chat['roleType']+".mp4"
+			openface_landmark_path = "./"+chat['roleType']+".csv"
+			driving_audio_path = "./speech.wav"
+			command = "python inference.py --mouth_region_size=256 --source_video_path="+ source_video_path +" --source_openface_landmark_path="+ openface_landmark_path +" --driving_audio_path="+ driving_audio_path +" --pretrained_clip_DINet_path=./asserts/clip_training_DINet_256mouth.pth"
+			os.system(command)
+
+			#영상 업로드
+			file_name = "./asserts/inference_result/" + chat['roleType'] + "_facial_dubbing_add_audio.mp4"    # 업로드할 파일 이름 
+			bucket = 'lip-reading-project-bucket'           	# 버켓 주소
+			key = chat['videoUrl'][37:]	# s3 파일 이미지 -> roleplayID+순서
+			s3client.upload_file(file_name, bucket, key) #파일 저장
+
+			#데이터베이스 percentage 업데이트
+			table.update_item(
+    			Key={
+        			'PK': data_requst.userID,
+        			'SK': data_requst.roleplayID,
+    			},
+    			UpdateExpression='SET percentage = :percentage',
+	    		ExpressionAttributeValues={
+    	    		':percentage': percentageAmount*idx + 10
+    			}
+			)
+
+		#데이터베이스 percentage 업데이트
+		final_percentage = percentageAmount*len(data_requst.chatList) + 10
+		if final_percentage != 100:
+			table.update_item(
+    			Key={
+        			'PK': data_requst.userID,
+        			'SK': data_requst.roleplayID,
+    			},
+    			UpdateExpression='SET percentage = :percentage',
+	    		ExpressionAttributeValues={
+    	    		':percentage': 100
+    			}
+			)
+
 		return {
-			"videoName": key,
+			"message": "영상 생성 성공",
 			"success": True,
 		}
 	
 	except Exception as e:
 		return {
 			"success": False,
-			"message": e
+			"message": str(e)
 		}
