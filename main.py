@@ -73,7 +73,7 @@ def makeVideo(data_requst: Data_request):
     			},
     			UpdateExpression='SET percentage = :percentage',
 	    		ExpressionAttributeValues={
-    	    		':percentage': percentageAmount*idx + 10
+    	    		':percentage': percentageAmount*(idx+1) + 10
     			}
 			)
 
