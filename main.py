@@ -51,7 +51,7 @@ def makeVideo(data_requst: Data_request):
   				input=chat['text']
 			)
 			response.stream_to_file(speech_file_path)
-			#음성 변환(mp3 -> wav)
+			#음성 변환 (mp3 -> wav)
 			AudioSegment.from_mp3(speech_name_mp3).export(str(data_requst.roleplayID)+".wav", format="wav")
 
 			#영상 생성
