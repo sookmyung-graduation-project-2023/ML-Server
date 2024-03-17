@@ -6,6 +6,7 @@ from pydub import AudioSegment
 import os
 from dotenv import load_dotenv
 import boto3
+import json
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
@@ -93,6 +94,16 @@ def makeVideo(data_requst: Data_request):
     				}
 				)	
 
+		lambda_client = boto3.client('lambda',
+                region_name=AWS_DEFAULT_REGION,
+                aws_access_key_id=AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+		)
+		response = lambda_client.invoke(
+    		FunctionName='lambda-pushAlarm-api',
+    		InvocationType='Event',
+    		Payload=json.dumps({ "userID": data_requst.userID, "roleplayID": data_requst.roleplayID })
+		) 
 		return {
 			"message": "영상 생성 성공",
 			"success": True,
