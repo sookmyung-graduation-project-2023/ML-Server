@@ -107,9 +107,9 @@ def makeVideo(data_requst: Data_request):
     		Payload=json.dumps({ "userID": data_requst.userID, "roleplayID": data_requst.roleplayID })
 		) 
 
-		os.remove("./"+str(data_requst.roleplayID)+".mp3")
-		os.remove("./"+str(data_requst.roleplayID)+".wav")
-		os.remove("./asserts/inference_result/"+str(data_requst.roleplayID)+".mp4")
+		os.remove("/"+str(data_requst.roleplayID)+".mp3")
+		os.remove("/"+str(data_requst.roleplayID)+".wav")
+		os.remove("/asserts/inference_result/"+str(data_requst.roleplayID)+".mp4")
 		
 		return {
 			"message": "영상 생성 성공",
