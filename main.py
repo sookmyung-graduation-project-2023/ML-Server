@@ -24,7 +24,7 @@ class Data_request(BaseModel):
 	roleplayID: str
 
 @app.post("/video")
-def makeVideo(data_requst: Data_request):
+async def makeVideo(data_requst: Data_request):
 	try:
 		voice_dic = {'woman': 'nova', 'man': 'echo', 'oldWoman': 'alloy', 'oldMan': 'onyx'}
 		openAIclient = OpenAI(api_key=AWS_API_KEY)
@@ -45,14 +45,14 @@ def makeVideo(data_requst: Data_request):
 			#음성 생성
 			speech_name_mp3 = str(data_requst.roleplayID)+".mp3"
 			speech_file_path = Path(__file__).parent / speech_name_mp3
-			response = openAIclient.audio.speech.create(
+			response = await openAIclient.audio.speech.create(
   				model="tts-1-hd",
   				voice=voice_dic[chat['roleType']],
   				input=chat['text']
 			)
 			response.stream_to_file(speech_file_path)
 			#음성 변환(mp3 -> wav)
-			AudioSegment.from_mp3(speech_name_mp3).export(str(data_requst.roleplayID)+".wav", format="wav")
+			await AudioSegment.from_mp3(speech_name_mp3).export(str(data_requst.roleplayID)+".wav", format="wav")
 
 			#영상 생성
 			source_video_path = "./"+chat['roleType']+".mp4"
@@ -60,13 +60,13 @@ def makeVideo(data_requst: Data_request):
 			driving_audio_path = "./"+str(data_requst.roleplayID)+".wav"
 			result_name = str(data_requst.roleplayID)
 			command = "python inference.py --mouth_region_size=256 --source_video_path="+ source_video_path +" --source_openface_landmark_path="+ openface_landmark_path +" --driving_audio_path="+ driving_audio_path +" --result_name="+ result_name+" --pretrained_clip_DINet_path=./asserts/clip_training_DINet_256mouth.pth"
-			os.system(command)
+			await os.system(command)
 
 			#영상 업로드
 			file_name = "./asserts/inference_result/" + result_name + ".mp4"    # 업로드할 파일 이름 
 			bucket = 'lip-reading-project-bucket'           	# 버켓 주소
 			key = chat['videoUrl'][37:]	# s3 파일 이미지 이름-> roleplayID+순서
-			s3client.upload_file(file_name, bucket, key) #파일 저장
+			await s3client.upload_file(file_name, bucket, key) #파일 저장
 
 			#데이터베이스 percentage 업데이트
 			if idx+1 == len(data_requst.chatList):
