@@ -156,7 +156,7 @@ if __name__ == '__main__':
         videowriter.write(frame_data[:, :, ::-1])
     videowriter.release()
     videowriter_face.release()
-    video_add_audio_path = res_video_path.replace('.mp4', '_add_audio.mp4')
+    video_add_audio_path = os.path.join(opt.res_video_dir, opt.result_name + ".mp4") #res_video_path.replace('.mp4', '_add_audio.mp4')
     if os.path.exists(video_add_audio_path):
         os.remove(video_add_audio_path)
     cmd = 'ffmpeg -i {} -i {} -c:v copy -c:a aac -strict experimental -map 0:v:0 -map 1:a:0 {}'.format(
