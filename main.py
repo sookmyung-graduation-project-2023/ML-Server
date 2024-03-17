@@ -43,8 +43,8 @@ def makeVideo(data_requst: Data_request):
 
 		for idx, chat in enumerate(data_requst.chatList):
 			#음성 생성
-			speech_name = str(data_requst.roleplayID)+".mp3"
-			speech_file_path = Path(__file__).parent / speech_name
+			speech_name_mp3 = str(data_requst.roleplayID)+".mp3"
+			speech_file_path = Path(__file__).parent / speech_name_mp3
 			response = openAIclient.audio.speech.create(
   				model="tts-1-hd",
   				voice=voice_dic[chat['roleType']],
@@ -52,12 +52,12 @@ def makeVideo(data_requst: Data_request):
 			)
 			response.stream_to_file(speech_file_path)
 			#음성 변환(mp3 -> wav)
-			AudioSegment.from_mp3("speech.mp3").export("speech.wav", format="wav")
+			AudioSegment.from_mp3(speech_name_mp3).export(str(data_requst.roleplayID)+".wav", format="wav")
 
 			#영상 생성
 			source_video_path = "./"+chat['roleType']+".mp4"
 			openface_landmark_path = "./"+chat['roleType']+".csv"
-			driving_audio_path = "./speech.wav"
+			driving_audio_path = "./"+str(data_requst.roleplayID)+".wav"
 			result_name = str(data_requst.roleplayID)
 			command = "python inference.py --mouth_region_size=256 --source_video_path="+ source_video_path +" --source_openface_landmark_path="+ openface_landmark_path +" --driving_audio_path="+ driving_audio_path +" --result_name="+ result_name+" --pretrained_clip_DINet_path=./asserts/clip_training_DINet_256mouth.pth"
 			os.system(command)
@@ -106,6 +106,11 @@ def makeVideo(data_requst: Data_request):
     		InvocationType='Event',
     		Payload=json.dumps({ "userID": data_requst.userID, "roleplayID": data_requst.roleplayID })
 		) 
+
+		os.remove("./"+str(data_requst.roleplayID)+".mp3")
+		os.remove("./"+str(data_requst.roleplayID)+".wav")
+		os.remove("./asserts/inference_result/"+str(data_requst.roleplayID)+".mp4")
+		
 		return {
 			"message": "영상 생성 성공",
 			"success": True,
