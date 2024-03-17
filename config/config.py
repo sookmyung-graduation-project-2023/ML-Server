@@ -83,6 +83,7 @@ class DINetInferenceOptions():
         self.parser.add_argument('--ref_channel', type=int, default=15, help='channels of reference image')
         self.parser.add_argument('--audio_channel', type=int, default=29, help='channels of audio feature')
         self.parser.add_argument('--mouth_region_size', type=int, default=256, help='help to resize window')
+        self.parser.add_argument('--result_name', type=str, default="result", help='help to resize window')
         self.parser.add_argument('--source_video_path',
                                  default='./asserts/examples/test4.mp4',
                                  type=str,
