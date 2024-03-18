@@ -68,6 +68,10 @@ def makeVideo(data_requst: Data_request):
 			key = chat['videoUrl'][37:]	# s3 파일 이미지 이름-> roleplayID+순서
 			s3client.upload_file(file_name, bucket, key) #파일 저장
 
+			os.remove("/home/ubuntu/project/ML-server/"+str(data_requst.roleplayID)+".mp3")
+			os.remove("/home/ubuntu/project/ML-server/"+str(data_requst.roleplayID)+".wav")
+			os.remove("/home/ubuntu/project/ML-server/asserts/inference_result/"+str(data_requst.roleplayID)+".mp4")
+
 			#데이터베이스 percentage 업데이트
 			if idx+1 == len(data_requst.chatList):
 				table.update_item(
@@ -107,9 +111,9 @@ def makeVideo(data_requst: Data_request):
     		Payload=json.dumps({ "userID": data_requst.userID, "roleplayID": data_requst.roleplayID })
 		) 
 
-		os.remove("/"+str(data_requst.roleplayID)+".mp3")
-		os.remove("/"+str(data_requst.roleplayID)+".wav")
-		os.remove("/asserts/inference_result/"+str(data_requst.roleplayID)+".mp4")
+		os.remove("./"+str(data_requst.roleplayID)+".mp3")
+		os.remove("./"+str(data_requst.roleplayID)+".wav")
+		os.remove("./asserts/inference_result/"+str(data_requst.roleplayID)+".mp4")
 		
 		return {
 			"message": "영상 생성 성공",
