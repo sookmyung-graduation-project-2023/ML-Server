@@ -43,7 +43,7 @@ def makeVideo(data_requst: Data_request):
 
 		for idx, chat in enumerate(data_requst.chatList):
 			#음성 생성
-			speech_name_mp3 = str(data_requst.roleplayID)+".mp3"
+			speech_name_mp3 = str(data_requst.roleplayID)+"_"+str(idx)+".mp3"
 			speech_file_path = Path(__file__).parent / speech_name_mp3
 			response = openAIclient.audio.speech.create(
   				model="tts-1-hd",
@@ -52,12 +52,12 @@ def makeVideo(data_requst: Data_request):
 			)
 			response.stream_to_file(speech_file_path)
 			#음성 변환 (mp3 -> wav)
-			AudioSegment.from_mp3(speech_name_mp3).export(str(data_requst.roleplayID)+".wav", format="wav")
+			AudioSegment.from_mp3(speech_name_mp3).export(str(data_requst.roleplayID)+"_"+str(idx)+".wav", format="wav")
 
 			#영상 생성
 			source_video_path = "./"+chat['roleType']+".mp4"
 			openface_landmark_path = "./"+chat['roleType']+".csv"
-			driving_audio_path = "./"+str(data_requst.roleplayID)+".wav"
+			driving_audio_path = "./"+str(data_requst.roleplayID)+"_"+str(idx)+".wav"
 			result_name = str(data_requst.roleplayID)
 			command = "python inference.py --mouth_region_size=256 --source_video_path="+ source_video_path +" --source_openface_landmark_path="+ openface_landmark_path +" --driving_audio_path="+ driving_audio_path +" --result_name="+ result_name+" --pretrained_clip_DINet_path=./asserts/clip_training_DINet_256mouth.pth"
 			os.system(command)
@@ -67,6 +67,10 @@ def makeVideo(data_requst: Data_request):
 			bucket = 'lip-reading-project-bucket'           	# 버켓 주소
 			key = chat['videoUrl'][37:]	# s3 파일 이미지 이름-> roleplayID+순서
 			s3client.upload_file(file_name, bucket, key) #파일 저장
+
+			os.remove("/home/ubuntu/project/ML-Server/"+str(data_requst.roleplayID)+"_"+str(idx)+".mp3")
+			os.remove("/home/ubuntu/project/ML-Server/"+str(data_requst.roleplayID)+"_"+str(idx)+".wav")
+			os.remove("/home/ubuntu/project/ML-Server/asserts/inference_result/"+str(data_requst.roleplayID)+".mp4")	
 
 			#데이터베이스 percentage 업데이트
 			if idx+1 == len(data_requst.chatList):
@@ -95,10 +99,6 @@ def makeVideo(data_requst: Data_request):
     	    			':percentage': percentageAmount*(idx+1) + 10
     				}
 				)
-
-			os.remove("/home/ubuntu/project/ML-Server/"+str(data_requst.roleplayID)+".mp3")
-			os.remove("/home/ubuntu/project/ML-Server/"+str(data_requst.roleplayID)+".wav")
-			os.remove("/home/ubuntu/project/ML-Server/asserts/inference_result/"+str(data_requst.roleplayID)+".mp4")	
 
 		lambda_client = boto3.client('lambda',
                 region_name=AWS_DEFAULT_REGION,
