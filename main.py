@@ -58,7 +58,7 @@ def makeVideo(data_requst: Data_request):
 			source_video_path = "./"+chat['roleType']+".mp4"
 			openface_landmark_path = "./"+chat['roleType']+".csv"
 			driving_audio_path = "./"+str(data_requst.roleplayID)+"_"+str(idx)+".wav"
-			result_name = str(data_requst.roleplayID)
+			result_name = str(data_requst.roleplayID)+"_"+str(idx)
 			command = "python inference.py --mouth_region_size=256 --source_video_path="+ source_video_path +" --source_openface_landmark_path="+ openface_landmark_path +" --driving_audio_path="+ driving_audio_path +" --result_name="+ result_name+" --pretrained_clip_DINet_path=./asserts/clip_training_DINet_256mouth.pth"
 			os.system(command)
 
