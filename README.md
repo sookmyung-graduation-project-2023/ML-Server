@@ -19,11 +19,12 @@ LipRead PPT (https://github.com/sookmyung-graduation-project-2023/Server/blob/ma
 
 ![image](https://github.com/sookmyung-graduation-project-2023/Server/assets/70003845/c3a57ba4-945a-4a76-99af-46aada547ce0)
 
- LipRead는 기본적으로 REST API를 통해 클라이언트와 통신합니다. Python 또는 Node.js로 구현된 Lambda를 통해 전반적인 CRUD를 수행합니다.  
+LipRead는 기본적으로 REST API를 통해 클라이언트와 통신합니다. Python 또는 Node.js로 구현된 Lambda를 통해 전반적인 CRUD를 수행합니다.  
 영상 생성 시 Lambda는 chat GPT를 통해 대화 텍스트를 생성하고 이를 EC2에 전송합니다. EC2는 OpenAI TTS를 통해 음성을 생성하고 DINet을 통해 대화 영상을 생성하며 이를 dynamoDB와 S3에 반영합니다.   
 클라이언트는 CloudFront를 통해 S3에 저장된 영상을 스트리밍하며, Websocket API와 DynamoDB Stream을 통해 EC2의 영상 생성 진행 상황을 실시간으로 확인합니다.  
 <br/>
-  
+Server 설명 (https://github.com/sookmyung-graduation-project-2023/Server/blob/main/README.md)  
+<br/>  
 ## 🔎 상세 소개
 
 - EC2
